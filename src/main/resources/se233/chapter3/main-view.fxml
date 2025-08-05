@@ -53,21 +53,21 @@
          <menus>
             <Menu mnemonicParsing="false" text="File">
                <items>
-                  <MenuItem mnemonicParsing="false" text="New" />
+<!--                  <MenuItem mnemonicParsing="false" text="New" />
                   <MenuItem mnemonicParsing="false" text="Open…" />
                   <Menu mnemonicParsing="false" text="Open Recent" />
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" text="Close" />
-                  <MenuItem mnemonicParsing="false" text="Save" />
+                  <SeparatorMenuItem mnemonicParsing="false" />-->
+                  <MenuItem fx:id="closeMenu" mnemonicParsing="false" text="Close" />
+<!--                  <MenuItem mnemonicParsing="false" text="Save" />
                   <MenuItem mnemonicParsing="false" text="Save As…" />
                   <MenuItem mnemonicParsing="false" text="Revert" />
                   <SeparatorMenuItem mnemonicParsing="false" />
                   <MenuItem mnemonicParsing="false" text="Preferences…" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" text="Quit" />
+                  <MenuItem mnemonicParsing="false" text="Quit" />-->
                </items>
             </Menu>
-            <Menu mnemonicParsing="false" text="Edit">
+<!--            <Menu mnemonicParsing="false" text="Edit">
                <items>
                   <MenuItem mnemonicParsing="false" text="Undo" />
                   <MenuItem mnemonicParsing="false" text="Redo" />
@@ -85,7 +85,7 @@
                <items>
                   <MenuItem mnemonicParsing="false" text="About MyHelloApp" />
                </items>
-            </Menu>
+            </Menu>-->
          </menus>
       </MenuBar>
       <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="240.0" prefWidth="200.0">

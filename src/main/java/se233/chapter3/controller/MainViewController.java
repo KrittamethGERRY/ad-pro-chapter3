@@ -4,11 +4,9 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -27,13 +25,17 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class MainViewController {
+    private boolean isPopup = false;
+
     LinkedHashMap<String, List<FileFreq>> uniqueSets;
     @FXML
-    private ListView<String> inputListView;
+    private ListView<AbstractMap.SimpleEntry<String, String>> inputListView;
     @FXML
     private Button startButton;
     @FXML
     private ListView listView;
+    @FXML
+    private MenuItem closeMenu;
     @FXML
     public void initialize() {
         inputListView.setOnDragOver(event -> {
@@ -55,11 +57,21 @@ public class MainViewController {
                 for (int i = 0; i < total_files; i++) {
                     File file = db.getFiles().get(i);
                     filePath = file.getAbsolutePath();
-                    inputListView.getItems().add(filePath);
-
+                    inputListView.getItems().add(new AbstractMap.SimpleEntry<>(file.getName(), filePath));
                 }
                 event.setDropCompleted(success);
                 event.consume();
+            }
+        });
+        inputListView.setCellFactory(listView -> new javafx.scene.control.ListCell<AbstractMap.SimpleEntry<String, String>>() {
+            @Override
+            protected void updateItem(AbstractMap.SimpleEntry<String, String> item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getKey());
+                }
             }
         });
         startButton.setOnAction(event -> {
@@ -73,12 +85,12 @@ public class MainViewController {
                             Launcher.primaryStage.getScene().setRoot(box);
                             ExecutorService executor = Executors.newFixedThreadPool(4);
                             final ExecutorCompletionService<Map<String, FileFreq>> completionService = new ExecutorCompletionService<>(executor);
-                            List<String> inputListViewItems = inputListView.getItems();
+                            List<AbstractMap.SimpleEntry<String,String>> inputListViewItems = inputListView.getItems();
                             int total_files = inputListViewItems.size();
                             Map<String, FileFreq>[] wordMap = new Map[total_files];
                             for (int i = 0; i < total_files; i++) {
                                 try {
-                                    String filePath = inputListViewItems.get(i);
+                                    String filePath = inputListViewItems.get(i).getValue();
                                     PdfDocument p = new PdfDocument(filePath);
                                     completionService.submit(new WordCountMapTask(p));
                                 } catch (IOException e) {
@@ -138,6 +150,7 @@ public class MainViewController {
                     thread.setDaemon(true);
                     thread.start();
                 });
+
         listView.setOnMouseClicked(event -> {
             List<FileFreq> listOfLinks = uniqueSets.get(listView.getSelectionModel().getSelectedItem());
             ListView<FileFreq> popupListView = new ListView<>();
@@ -150,13 +163,32 @@ public class MainViewController {
             popupListView.setPrefWidth(Region.USE_COMPUTED_SIZE);
             popupListView.setPrefHeight(popupListView.getItems().size() * 40);
             popupListView.setOnMouseClicked(e -> {
+
                 Launcher.hs.showDocument("file:///" + lookupTable.get(popupListView.getSelectionModel().getSelectedItem()));
                 popupListView.getScene().getWindow().hide();
             });
             Popup popup = new Popup();
             popup.getContent().add(popupListView);
             popup.show(Launcher.primaryStage);
-            popup.setAutoHide(true);
+        });
+
+        listView.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ESCAPE) {
+                try {
+                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION, "Do you want to close the document?");
+                    confirmAlert.showAndWait();
+                    if (confirmAlert.getResult() == ButtonType.OK) {
+                        Runtime.getRuntime().exec("taskkill /f /im Acrobat.exe");
+                        new Alert(Alert.AlertType.INFORMATION, "Documents closed").showAndWait();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        closeMenu.setOnAction(e -> {
+            System.exit(0);
         });
 
     }
