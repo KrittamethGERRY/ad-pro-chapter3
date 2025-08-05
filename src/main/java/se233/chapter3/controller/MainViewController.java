@@ -19,13 +19,12 @@ import se233.chapter3.model.PdfDocument;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class MainViewController {
     LinkedHashMap<String, List<FileFreq>> uniqueSets;
@@ -53,8 +52,6 @@ public class MainViewController {
                 success = true;
                 String filePath;
                 int total_files = db.getFiles().size();
-                WordCountMapTask[] wordCountMapTasks = new WordCountMapTask[total_files];
-                Map<String, FileFreq>[] wordMap = new Map[total_files];
                 for (int i = 0; i < total_files; i++) {
                     File file = db.getFiles().get(i);
                     filePath = file.getAbsolutePath();
@@ -99,7 +96,31 @@ public class MainViewController {
                             try {
                                 WordCountReduceTask merger = new WordCountReduceTask(wordMap);
                                 Future<LinkedHashMap<String, List<FileFreq>>> future = executor.submit(merger);
-                                uniqueSets = future.get();
+                                LinkedHashMap<String, List<FileFreq>> unsortedList = future.get();
+                                for (int i = 0; i < total_files; i++) {
+                                    uniqueSets = (LinkedHashMap<String, List<FileFreq>>) unsortedList.entrySet().stream().sorted(Map.Entry.<String, List<FileFreq>>comparingByValue((list1, list2) ->
+                                                Integer.compare( list1.stream().mapToInt(FileFreq::getFreq).sum(), list2.stream().mapToInt(FileFreq::getFreq).sum())).reversed())
+                                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
+                                }
+                                LinkedHashMap<String, List<FileFreq>> tempSet = new LinkedHashMap<>(uniqueSets);
+                                uniqueSets.clear();
+                                tempSet.forEach((key, value) -> {
+                                    String tempKey = ": (";
+                                    ArrayList<Integer> freqs = new ArrayList<>();
+                                    for (FileFreq num : value) {
+                                        freqs.add(num.getFreq());
+                                        Collections.sort(freqs);
+                                    }
+                                    for (int i = freqs.size() - 1 ; i >= 0; i--) {
+                                        tempKey += freqs.get(i) + ", ";
+                                    }
+                                    if (tempKey.endsWith(", ")) {
+                                        tempKey = tempKey.substring(0, tempKey.length() - 2);
+                                    }
+                                    tempKey = tempKey.trim() + ')';
+                                    uniqueSets.put(key + tempKey, value);
+                                });
+
                                 listView.getItems().addAll(uniqueSets.keySet());
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -120,6 +141,7 @@ public class MainViewController {
         listView.setOnMouseClicked(event -> {
             List<FileFreq> listOfLinks = uniqueSets.get(listView.getSelectionModel().getSelectedItem());
             ListView<FileFreq> popupListView = new ListView<>();
+            listOfLinks.sort(Comparator.comparing(FileFreq::getFreq).reversed());
             LinkedHashMap<FileFreq, String> lookupTable = new LinkedHashMap<>();
             for (int i = 0; i < listOfLinks.size(); i++) {
                 lookupTable.put(listOfLinks.get(i), listOfLinks.get(i).getPath());
@@ -134,6 +156,7 @@ public class MainViewController {
             Popup popup = new Popup();
             popup.getContent().add(popupListView);
             popup.show(Launcher.primaryStage);
+            popup.setAutoHide(true);
         });
 
     }

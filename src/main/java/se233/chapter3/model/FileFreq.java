@@ -1,6 +1,6 @@
 package se233.chapter3.model;
 
-public class FileFreq {
+public class FileFreq implements Comparable<FileFreq>{
     private String name, path;
     private Integer freq;
     public FileFreq(String name, String path, Integer freq) {
@@ -24,5 +24,8 @@ public class FileFreq {
     @Override
     public String toString() {
         return String.format("(%s:%d", name, freq);
+    }
+    public int compareTo(FileFreq o) {
+        return freq.compareTo(o.freq);
     }
 }
