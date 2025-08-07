@@ -170,6 +170,12 @@ public class MainViewController {
             Popup popup = new Popup();
             popup.getContent().add(popupListView);
             popup.show(Launcher.primaryStage);
+
+            popupListView.setOnKeyPressed(keyEvent -> {
+                if (keyEvent.getCode() == KeyCode.ESCAPE) {
+                    popup.hide();
+                }
+            });
         });
 
         listView.setOnKeyPressed(event -> {
