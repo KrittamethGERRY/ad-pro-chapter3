@@ -177,7 +177,6 @@ public class MainViewController {
                 }
             });
         });
-
         listView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 try {
